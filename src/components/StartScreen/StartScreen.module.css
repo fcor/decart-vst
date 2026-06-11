@@ -1,0 +1,69 @@
+.wrapper {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at center, #1a1a1a 0%, #050505 100%);
+  z-index: 10;
+}
+
+.inner {
+  max-width: 28rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #888;
+  margin-bottom: 0.75rem;
+}
+
+.title {
+  font-size: 2.25rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin-bottom: 1rem;
+  color: #f4f3f1;
+}
+
+.copy {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: #bbb;
+  margin-bottom: 2rem;
+}
+
+.button {
+  appearance: none;
+  border: none;
+  background: #f4f3f1;
+  color: #0a0a0a;
+  font: inherit;
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  padding: 0.85rem 2.5rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+  background: #fff;
+}
+
+.button:active {
+  transform: translateY(0);
+}
+
+.note {
+  margin-top: 1.5rem;
+  font-size: 0.75rem;
+  color: #666;
+  letter-spacing: 0.05em;
+}
