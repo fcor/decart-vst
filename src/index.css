@@ -6,11 +6,61 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
+:root {
+  /* palette */
+  --bg-0: #050505;
+  --bg-1: #181716;
+  --ink: #f4f3f1;
+  --ink-dim: #c5c1b8;
+  --ink-soft: #9a958c;
+  --ink-faint: #6b6760;
+  --line: rgba(255, 255, 255, 0.12);
+  --line-strong: rgba(255, 255, 255, 0.28);
+
+  /* type */
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, ui-serif, serif;
+
+  /* motion */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* safe-area shorthands */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+}
+
+html,
+body,
+#root {
   height: 100%;
   width: 100%;
   overflow: hidden;
-  font-family: system-ui, -apple-system, sans-serif;
-  background: #0a0a0a;
-  color: #f4f3f1;
+  font-family: var(--font-sans);
+  background: var(--bg-0);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Use dynamic viewport height where supported so mobile browser chrome doesn't
+   clip the full-bleed layout (iOS Safari 100vh quirk). */
+@supports (height: 100dvh) {
+  html,
+  body,
+  #root {
+    height: 100dvh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

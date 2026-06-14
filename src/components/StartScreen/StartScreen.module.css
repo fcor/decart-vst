@@ -4,23 +4,72 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at center, #1a1a1a 0%, #050505 100%);
+  overflow-y: auto;
+  padding:
+    calc(2rem + var(--safe-t))
+    calc(1.25rem + var(--safe-r))
+    calc(2rem + var(--safe-b))
+    calc(1.25rem + var(--safe-l));
+  background:
+    radial-gradient(ellipse 120% 80% at 50% 30%, #211f1c 0%, var(--bg-0) 70%);
   z-index: 10;
 }
 
+/* slow breathing glow behind the content */
+.wrapper::before {
+  content: "";
+  position: absolute;
+  width: min(80vw, 40rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(233, 220, 196, 0.07), transparent 60%);
+  filter: blur(20px);
+  animation: breathe 9s var(--ease) infinite;
+  pointer-events: none;
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
 .inner {
+  position: relative;
   max-width: 30rem;
   width: 100%;
   text-align: center;
-  padding: 2rem;
+  animation: fadeUp 0.7s var(--ease) both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .eyebrow {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
-  letter-spacing: 0.2em;
-  color: #888;
+  letter-spacing: 0.28em;
+  color: var(--ink-soft);
   margin-bottom: 1.25rem;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.1rem, 7vw, 3.25rem);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  margin-bottom: 1rem;
+  color: var(--ink);
+}
+
+.copy {
+  font-size: clamp(0.9rem, 2.6vw, 1rem);
+  line-height: 1.55;
+  color: var(--ink-dim);
+  max-width: 26rem;
+  margin: 0 auto 2rem;
 }
 
 .storyList {
@@ -37,14 +86,14 @@
   width: 100%;
   text-align: left;
   background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 0.85rem;
-  padding: 0.9rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  padding: 0.95rem 1.15rem;
   cursor: pointer;
   color: inherit;
   font: inherit;
   position: relative;
-  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease), transform 0.2s var(--ease);
 }
 
 .storyCard:hover {
@@ -52,78 +101,76 @@
   transform: translateY(-1px);
 }
 
+.storyCard:focus-visible {
+  outline: 2px solid var(--line-strong);
+  outline-offset: 2px;
+}
+
 .storyCardSelected {
-  border-color: #f4f3f1;
+  border-color: var(--ink);
   background: rgba(255, 255, 255, 0.1);
 }
 
 .storyTitle {
   display: block;
-  font-size: 1.05rem;
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
   font-weight: 500;
-  color: #f4f3f1;
+  color: var(--ink);
   margin-bottom: 0.25rem;
 }
 
 .storyPitch {
   display: block;
   font-size: 0.85rem;
-  line-height: 1.4;
-  color: #aaa;
+  line-height: 1.45;
+  color: var(--ink-soft);
   padding-right: 2.5rem;
 }
 
 .storyMeta {
   position: absolute;
-  top: 0.9rem;
-  right: 1.1rem;
+  top: 0.95rem;
+  right: 1.15rem;
   font-size: 0.7rem;
   letter-spacing: 0.05em;
-  color: #777;
-}
-
-.title {
-  font-size: 2.25rem;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  margin-bottom: 1rem;
-  color: #f4f3f1;
-}
-
-.copy {
-  font-size: 0.95rem;
-  line-height: 1.5;
-  color: #bbb;
-  margin-bottom: 2rem;
+  color: var(--ink-faint);
 }
 
 .button {
   appearance: none;
   border: none;
-  background: #f4f3f1;
+  background: var(--ink);
   color: #0a0a0a;
   font: inherit;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 1rem;
   letter-spacing: 0.02em;
-  padding: 0.85rem 2.5rem;
+  min-height: 48px;
+  padding: 0.85rem 2.75rem;
   border-radius: 999px;
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: transform 0.15s var(--ease), box-shadow 0.2s var(--ease), background 0.15s var(--ease);
 }
 
 .button:hover {
   transform: translateY(-1px);
   background: #fff;
+  box-shadow: 0 8px 30px rgba(233, 220, 196, 0.18);
 }
 
 .button:active {
   transform: translateY(0);
 }
 
+.button:focus-visible {
+  outline: 2px solid var(--line-strong);
+  outline-offset: 3px;
+}
+
 .note {
   margin-top: 1.5rem;
-  font-size: 0.75rem;
-  color: #666;
-  letter-spacing: 0.05em;
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  letter-spacing: 0.08em;
 }

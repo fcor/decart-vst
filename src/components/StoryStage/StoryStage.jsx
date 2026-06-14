@@ -80,10 +80,19 @@ function StoryStage({ connect, disconnect, status, error: sdkError, modelId, onR
         muted
       />
       {status === 'connecting' && (
-        <div className={styles.overlay}>Preparing the story…</div>
+        <div className={styles.overlay}>
+          <div className={styles.preparing}>
+            <span className={styles.dots} aria-hidden="true">
+              <i></i>
+              <i></i>
+              <i></i>
+            </span>
+            <p>Preparing the story…</p>
+          </div>
+        </div>
       )}
       {sdkError && (
-        <div className={styles.overlay}>{sdkError}</div>
+        <div className={styles.overlay}><p>{sdkError}</p></div>
       )}
     </div>
   )

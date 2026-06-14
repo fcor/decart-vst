@@ -16,6 +16,7 @@
 - Beat timing tuned to clip lengths (greenhouse measured): beats at 0/9/18/27/38, ~45s total
 - Ambient sound layer (Web Audio): per-beat beds, 1.5s crossfade, ducking under narration, end fade-out; per-beat `effectGain`; ambient has its own lead (`AMBIENT_LEAD_SEC`)
 - Transition cold-start fix: first prompt via `connect` `initialState` — smoothed the whole set of transitions at `leadInSec: 0`
+- UI polish pass: serif display type + CSS-variable palette, refined Start/End screens, breathing background, animated "Preparing the story…" loader; fluid type + safe-area insets + `100dvh` for responsiveness
 
 ## Parked / blocked
 
@@ -23,19 +24,13 @@
 
 ## Next (in rough order)
 
-1. **Polish StartScreen + EndScreen** — visuals, copy, share affordance
-2. **Person-presence gate (cost saver)** — only connect to Decart when there's a person in front of the camera. Adapt the [DecartAI tryon-examples / person-detection](https://github.com/DecartAI/tryon-examples/tree/main/examples/person-detection) example. Specifics:
+1. **Person-presence gate (cost saver)** — only connect to Decart when there's a person in front of the camera. Adapt the [DecartAI tryon-examples / person-detection](https://github.com/DecartAI/tryon-examples/tree/main/examples/person-detection) example. Specifics:
    - Use `@mediapipe/tasks-vision` (Pose Landmarker, `pose_landmarker_lite` model, GPU delegate, VIDEO running mode, `numPoses: 1`)
    - Build a `usePersonDetection(videoEl)` hook returning `{ personPresent, isReady }`
    - Poll at `DETECTION_INTERVAL_MS` (1000 ms); flip `personPresent=false` only after `MISS_THRESHOLD` (3) consecutive empty detections (~3s) so a passing occlusion doesn't tear down the session
    - Use this as a *gate* before `connect()` runs and to trigger `disconnect()` when the person leaves; on return, fresh token → reconnect → resume the story (or restart it — design call)
    - Add a "Step into the frame to begin" affordance on `StartScreen` while waiting for first detection
-3. **Full responsive layout — mobile + tablet** — the experience is full-bleed on desktop today; verify and polish on iOS Safari (portrait), iPad, and small Android. Specifically:
-   - `<StoryStage>` and `<Caption>` should fill safe-area insets correctly
-   - `StartScreen` typography/spacing scales down without clipping
-   - Camera constraints request the right aspect ratio per breakpoint (the model's expected resolution may not match the device)
-   - Touch targets ≥44px (Begin button, Restart button)
-   - Test on real devices, not just Chrome devtools — iOS Safari has quirks with `<video>` autoplay + getUserMedia + 100vh
+2. **Responsive verification on real devices** — the layout is now fluid (clamp type, safe-area insets, `100dvh`, ≥48px touch targets). Still to verify on actual hardware: iOS Safari (portrait) `<video>` autoplay + getUserMedia + the home-indicator inset, iPad, small Android. Test on devices, not just Chrome devtools.
 
 ## Later (open questions)
 

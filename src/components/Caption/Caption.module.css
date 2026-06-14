@@ -3,22 +3,26 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 2rem 1.5rem 3rem;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  padding:
+    2rem
+    calc(1.5rem + var(--safe-r))
+    calc(2.25rem + var(--safe-b))
+    calc(1.5rem + var(--safe-l));
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72), transparent);
   pointer-events: none;
   z-index: 5;
 }
 
 .text {
-  max-width: 32rem;
+  max-width: 34rem;
   margin: 0 auto;
   text-align: center;
-  font-size: 1.05rem;
+  font-size: clamp(1rem, 3.4vw, 1.2rem);
   line-height: 1.5;
   color: #fff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.65);
   letter-spacing: 0.01em;
-  animation: fadeIn 0.6s ease;
+  animation: fadeIn 0.6s var(--ease);
 }
 
 @keyframes fadeIn {

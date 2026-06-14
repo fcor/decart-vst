@@ -176,7 +176,7 @@ function App() {
         <div className={styles.endScreen}>
           <h2>The end.</h2>
           <button className={styles.restartButton} onClick={handleRestart}>
-            Tell another
+            Start again
           </button>
         </div>
       )}
