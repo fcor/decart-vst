@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import { models } from '@decartai/sdk'
 import styles from './StoryStage.module.css'
 
-function StoryStage({ connect, disconnect, status, error: sdkError, modelId, onReady, transitioning, initialPrompt }) {
+function StoryStage({ connect, disconnect, status, error: sdkError, modelId, onReady, transitioning, initialPrompt, facingMode = 'user' }) {
   const localVideoRef = useRef(null)
   const outputVideoRef = useRef(null)
   const streamRef = useRef(null)
@@ -19,7 +19,7 @@ function StoryStage({ connect, disconnect, status, error: sdkError, modelId, onR
             width: { ideal: model.width },
             height: { ideal: model.height },
             frameRate: { ideal: model.fps },
-            facingMode: 'user',
+            facingMode: { ideal: facingMode },
           },
           audio: false,
         })
@@ -53,17 +53,25 @@ function StoryStage({ connect, disconnect, status, error: sdkError, modelId, onR
         streamRef.current = null
       }
     }
-  }, [modelId, connect, disconnect, onReady, initialPrompt])
+  }, [modelId, connect, disconnect, onReady, initialPrompt, facingMode])
 
   if (cameraError) {
     return <div className={styles.error}>Camera error: {cameraError}</div>
   }
 
+  // Mirror the display only for the front camera (selfie feel). The rear camera
+  // must show as-is, or text/scenes in the environment come out backwards.
+  const mirrored = facingMode === 'user'
+
   return (
     <div className={styles.wrapper}>
       <video
         ref={localVideoRef}
-        className={`${styles.video} ${status === 'connected' ? styles.hidden : ''}`}
+        className={[
+          styles.video,
+          mirrored ? styles.mirrored : '',
+          status === 'connected' ? styles.hidden : '',
+        ].filter(Boolean).join(' ')}
         autoPlay
         playsInline
         muted
@@ -72,6 +80,7 @@ function StoryStage({ connect, disconnect, status, error: sdkError, modelId, onR
         ref={outputVideoRef}
         className={[
           styles.video,
+          mirrored ? styles.mirrored : '',
           status !== 'connected' ? styles.hidden : '',
           transitioning ? styles.transitioning : '',
         ].filter(Boolean).join(' ')}

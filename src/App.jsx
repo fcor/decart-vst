@@ -11,9 +11,16 @@ const TRANSITION_MS = 1200 // duration of the blur/dim mask around a setPrompt c
 const AMBIENT_LEAD_SEC = 1 // ambient bed crossfades slightly ahead of the beat,
 // independent of the visual leadInSec (which can be 0 to land the cut on the line)
 
+// Coarse pointer ≈ phone/tablet — default to the rear camera there so the user can
+// scan the world around them (where the restyle is most interesting), and only show
+// the front/rear toggle on those devices.
+const isCoarsePointer =
+  typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches
+
 function App() {
   const [phase, setPhase] = useState('idle') // idle | running | done
   const [selectedStory, setSelectedStory] = useState(activeStories[0])
+  const [facingMode, setFacingMode] = useState(isCoarsePointer ? 'environment' : 'user')
   const [beatIndex, setBeatIndex] = useState(0)
   const [transitioning, setTransitioning] = useState(false)
   const timeoutsRef = useRef([])
@@ -161,6 +168,7 @@ function App() {
           onReady={handleStageReady}
           transitioning={transitioning}
           initialPrompt={selectedStory.beats[0]?.prompt}
+          facingMode={facingMode}
         />
       )}
 
@@ -169,7 +177,13 @@ function App() {
       )}
 
       {phase === 'idle' && (
-        <StartScreen stories={activeStories} onStart={handleStart} />
+        <StartScreen
+          stories={activeStories}
+          onStart={handleStart}
+          showCameraToggle={isCoarsePointer}
+          facingMode={facingMode}
+          onFacingChange={setFacingMode}
+        />
       )}
 
       {phase === 'done' && (

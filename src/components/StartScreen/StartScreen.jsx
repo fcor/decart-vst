@@ -1,9 +1,38 @@
 import { useState } from 'react'
 import styles from './StartScreen.module.css'
 
-function StartScreen({ stories, onStart }) {
+function StartScreen({
+  stories,
+  onStart,
+  showCameraToggle = false,
+  facingMode = 'user',
+  onFacingChange,
+}) {
   const [selectedId, setSelectedId] = useState(stories[0]?.id)
   const selected = stories.find((s) => s.id === selectedId) ?? stories[0]
+
+  // Front/rear camera toggle (mobile/tablet only). Rear lets the user scan the
+  // world around them, where the restyle is most striking.
+  const cameraToggle = showCameraToggle ? (
+    <div className={styles.cameraToggle} role="group" aria-label="Camera">
+      <button
+        type="button"
+        className={`${styles.cameraOption} ${facingMode === 'environment' ? styles.cameraOptionActive : ''}`}
+        onClick={() => onFacingChange?.('environment')}
+        aria-pressed={facingMode === 'environment'}
+      >
+        Rear
+      </button>
+      <button
+        type="button"
+        className={`${styles.cameraOption} ${facingMode === 'user' ? styles.cameraOptionActive : ''}`}
+        onClick={() => onFacingChange?.('user')}
+        aria-pressed={facingMode === 'user'}
+      >
+        Front
+      </button>
+    </div>
+  ) : null
 
   // Single active story → skip the picker, show a clean focused intro.
   if (stories.length === 1) {
@@ -14,6 +43,7 @@ function StartScreen({ stories, onStart }) {
           <p className={styles.eyebrow}>A {only.durationSec}-second story</p>
           <h1 className={styles.title}>{only.title}</h1>
           <p className={styles.copy}>{only.pitch}</p>
+          {cameraToggle}
           <button className={styles.button} onClick={() => onStart(only)}>
             Begin
           </button>
@@ -51,6 +81,7 @@ function StartScreen({ stories, onStart }) {
         <p className={styles.copy}>
           Step into the frame. We'll ask for camera access, then the story will unfold around you.
         </p>
+        {cameraToggle}
         <button className={styles.button} onClick={() => onStart(selected)}>
           Begin
         </button>

@@ -98,6 +98,8 @@ If the deployed origin and `ALLOWED_ORIGIN` env var don't match, the SDK will re
 
 ## Things that are intentionally simple
 
+- Camera: rear by default on mobile/tablet (coarse pointer) so the user can scan the world around them — that's where the restyle reads best; front on desktop. A front/rear toggle on the StartScreen lets them switch *before* Begin (no in-session switch — that would require a reconnect and restart the story). Display is mirrored only for the front camera.
+
 - No state management library — `useState` + a ref for the SDK client is enough.
 - `<audio>` element plays per-beat mp3 narration; caption is the visual fallback when a clip is missing.
 - Story is a static JS file, not a CMS or JSON fetched at runtime. Editing the story = editing the file = redeploying.

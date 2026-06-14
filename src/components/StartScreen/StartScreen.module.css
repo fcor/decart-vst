@@ -137,6 +137,46 @@
   color: var(--ink-faint);
 }
 
+.cameraToggle {
+  display: flex;
+  width: fit-content;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  margin: 0 auto 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.cameraOption {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  min-height: 40px;
+  padding: 0.4rem 1.4rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.cameraOption:hover {
+  color: var(--ink-dim);
+}
+
+.cameraOptionActive {
+  background: var(--ink);
+  color: #0a0a0a;
+}
+
+.cameraOption:focus-visible {
+  outline: 2px solid var(--line-strong);
+  outline-offset: 2px;
+}
+
 .button {
   appearance: none;
   border: none;

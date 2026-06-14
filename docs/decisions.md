@@ -4,6 +4,18 @@ Append-only log. Newest at top. Each entry: date, decision, why, what was reject
 
 ---
 
+## 2026-06-11 — Rear camera by default on mobile, with a pre-start front/rear toggle
+
+**Decision:** On coarse-pointer devices (phones/tablets) the camera defaults to `facingMode: 'environment'` (rear); desktop stays `'user'` (front). A front/rear segmented toggle on the StartScreen lets the user choose before Begin. Display mirroring (`scaleX(-1)`) is now conditional — applied only to the front camera.
+
+**Why:** On a phone in selfie mode the face fills the frame and the environmental restyle (forest/cavern/sunset) is lost. The rear camera lets the user scan their surroundings and watch the world transform — more on-theme ("transform the world around you") and more striking on mobile. Mirroring must be front-only or rear-camera text/scenes come out backwards.
+
+**Rejected:** In-session camera flip — the Decart session is bound to the stream at `connect()`, so switching mid-story means disconnect → reconnect → model re-warm → story restart. Not worth it; the pre-start toggle covers the need. Kept display-side CSS mirroring (conditional) rather than switching to the SDK's input `mirror` option, to preserve current front-camera behavior.
+
+**Note:** Input sent to Decart is un-flipped in both modes (unchanged); only the displayed video is mirrored for front. `getUserMedia` uses `facingMode: { ideal }` so devices without the requested camera fall back instead of throwing.
+
+---
+
 ## 2026-06-11 — First prompt via `initialState` fixes cold-start transition lag
 
 **Decision:** Send beat 0's prompt as `connect({ initialState: { prompt: { text } } })` so the model renders the opening look during connection setup, and skip re-sending beat 0's prompt in the scheduler.
