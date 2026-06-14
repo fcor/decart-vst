@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import { models } from '@decartai/sdk'
 import styles from './StoryStage.module.css'
 
-function StoryStage({ connect, disconnect, status, error: sdkError, modelId, onReady }) {
+function StoryStage({ connect, disconnect, status, error: sdkError, modelId, onReady, transitioning, initialPrompt }) {
   const localVideoRef = useRef(null)
   const outputVideoRef = useRef(null)
   const streamRef = useRef(null)
@@ -35,7 +35,7 @@ function StoryStage({ connect, disconnect, status, error: sdkError, modelId, onR
         }
 
         if (outputVideoRef.current) {
-          await connect(stream, outputVideoRef.current, modelId)
+          await connect(stream, outputVideoRef.current, modelId, initialPrompt)
           if (!cancelled) onReady?.()
         }
       } catch (err) {
@@ -53,7 +53,7 @@ function StoryStage({ connect, disconnect, status, error: sdkError, modelId, onR
         streamRef.current = null
       }
     }
-  }, [modelId, connect, disconnect, onReady])
+  }, [modelId, connect, disconnect, onReady, initialPrompt])
 
   if (cameraError) {
     return <div className={styles.error}>Camera error: {cameraError}</div>
@@ -70,7 +70,11 @@ function StoryStage({ connect, disconnect, status, error: sdkError, modelId, onR
       />
       <video
         ref={outputVideoRef}
-        className={`${styles.video} ${status !== 'connected' ? styles.hidden : ''}`}
+        className={[
+          styles.video,
+          status !== 'connected' ? styles.hidden : '',
+          transitioning ? styles.transitioning : '',
+        ].filter(Boolean).join(' ')}
         autoPlay
         playsInline
         muted

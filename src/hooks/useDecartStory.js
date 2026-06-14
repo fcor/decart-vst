@@ -12,7 +12,7 @@ export function useDecartStory() {
   const [status, setStatus] = useState('idle') // idle | connecting | connected | error
   const [error, setError] = useState(null)
 
-  const connect = useCallback(async (localStream, outputVideoEl, modelId) => {
+  const connect = useCallback(async (localStream, outputVideoEl, modelId, initialPrompt) => {
     setStatus('connecting')
     setError(null)
 
@@ -22,6 +22,10 @@ export function useDecartStory() {
 
       const rtClient = await client.realtime.connect(localStream, {
         model: models.realtime(modelId),
+        // Apply the first prompt during connection setup so the opening look is
+        // already rendering when the story starts (avoids a cold first beat /
+        // raw-camera flash). Recommended by the Decart docs.
+        ...(initialPrompt ? { initialState: { prompt: { text: initialPrompt } } } : {}),
         onRemoteStream: (remoteStream) => {
           outputVideoEl.srcObject = remoteStream
           setStatus('connected')
