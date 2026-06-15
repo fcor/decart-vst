@@ -16,11 +16,12 @@
 - Beat timing tuned to clip lengths (greenhouse measured): beats at 0/9/18/27/38, ~45s total
 - Ambient sound layer (Web Audio): per-beat beds, 1.5s crossfade, ducking under narration, end fade-out; per-beat `effectGain`; ambient has its own lead (`AMBIENT_LEAD_SEC`)
 - Transition cold-start fix: first prompt via `connect` `initialState` — smoothed the whole set of transitions at `leadInSec: 0`
+- Promise-driven transition mask: blur tracks the actual `setPrompt` resolve (transform applied server-side), with min/max bounds + a generation guard — adapts to connection/model speed instead of a fixed timer
 - UI polish pass: serif display type + CSS-variable palette, refined Start/End screens, breathing background, animated "Preparing the story…" loader; fluid type + safe-area insets + `100dvh` for responsiveness
 
 ## Parked / blocked
 
-- **Reference image plumbing** — built and reverted. The sticky `referenceImage` wiring (fetch→Blob→cache, `setImage(blob, { prompt })`) worked, but on `lucy-restyle-2` the reference image and text prompt appear mutually exclusive: with an image set, the prompt is ignored, and the image-only output was less interesting than prompt-only. Reverted to prompt-only. Blocked on Decart's answer (see `decart-notes.md`) re: whether any realtime model truly *combines* image + prompt. Code preserved in git history; test images still in `public/references/`.
+- **Reference image plumbing** — built and reverted; prompt-only output was more interesting. The Decart team has since clarified the correct approach (see `decart-notes.md` / `decisions.md`): combine via `set({ image, prompt, enhance })` (not `setImage`, whose prompt arg is ignored), `set()` is not sticky so reuse a `client.files.upload()` `file_…` id, and there's no reference-weighting knob. **Recommendation: revisit with Lucy 2.5** (releasing soon), which Decart says handles non-face style/atmosphere significantly better than `restyle-2`. Code preserved in git history; test images still in `public/references/`.
 
 ## Next (in rough order)
 
@@ -40,6 +41,7 @@
 - Branching narrative — let the user choose a path mid-story?
 - Voice variants — different ElevenLabs voices per story?
 - Pre-roll countdown — "Story starts in 3… 2… 1…" so user can pose
+- **Lucy 2.5 upgrade** — when it releases, evaluate it for the restyle (Decart says it's a better fit for non-face style/atmosphere) and re-test the reference-image idea on it.
 
 ## Open questions to resolve with the user
 

@@ -4,6 +4,31 @@ Append-only log. Newest at top. Each entry: date, decision, why, what was reject
 
 ---
 
+## 2026-06-11 — Promise-driven transition mask (replaces fixed `TRANSITION_MS`)
+
+**Decision:** The blur/dim mask now stays on until `setPrompt`'s promise resolves — which Decart resolves only once the new look is applied server-side — instead of a fixed 1200ms timer. A `MIN_MASK_MS` (300ms) floor prevents a flash on a fast transform, a `MAX_MASK_MS` (5s) ceiling clears the mask if the promise never resolves, and a generation counter (`maskGenRef`) invalidates stale resolves on restart/overlap.
+
+**Why:** Per the Decart team, the realtime methods resolve on actual server-side application. Driving the mask off that makes it track the *real* transform duration, which varies with connection/model warmth — more accurate than guessing a fixed duration (which was either too long when warm or too short when cold).
+
+**Rejected:** Keeping the fixed timer (didn't adapt to latency); awaiting in the scheduler directly (the generation guard + min/max handling is cleaner kept inside `triggerBeatPrompt`).
+
+---
+
+## 2026-06-11 — Decart team answers: corrections to earlier reference-image assumptions
+
+Direct guidance from the Decart team, which **supersedes** the earlier "bundled `setImage(blob, { prompt })`" entry below:
+
+- **`setImage(blob, { prompt })` is not valid — the second arg is ignored.** To combine image + prompt, use `set({ image, prompt, enhance })` (one atomic update). This explains what we observed: with `setImage`, the image applied and the prompt was dropped.
+- **`set()` is not sticky** — re-send the image on every call, or upload once with `client.files.upload()` and reuse the `file_…` id (more efficient on the wire). Earlier notes claimed the image stayed sticky across `setPrompt`; that was wrong.
+- **Keep `enhance: true`** (default) — enriches the prompt to complement the style reference. We already rely on the default.
+- **No reference-vs-prompt weighting** is exposed.
+- **`set`/`setPrompt`/`setImage` resolve only once the transform is applied server-side** — usable to drive transition timing and to guard against duplicate in-flight calls (more accurate than our fixed `TRANSITION_MS` mask). Opportunity, not yet adopted.
+- **Model:** `lucy-restyle-2` confirmed correct for now; Lucy 2.1 is face-only. The team recommends **waiting for Lucy 2.5** (soon) for non-face style/atmosphere — better fit than restyle-2.
+
+**Impact:** No running-code change — the app is prompt-only and that's unaffected. The reference-image feature stays parked, now with a clear path when we revisit (`set({ image, prompt })` + `files.upload` id, or Lucy 2.5). Docs in `decart-notes.md` corrected.
+
+---
+
 ## 2026-06-11 — Rear camera by default on mobile, with a pre-start front/rear toggle
 
 **Decision:** On coarse-pointer devices (phones/tablets) the camera defaults to `facingMode: 'environment'` (rear); desktop stays `'user'` (front). A front/rear segmented toggle on the StartScreen lets the user choose before Begin. Display mirroring (`scaleX(-1)`) is now conditional — applied only to the front camera.

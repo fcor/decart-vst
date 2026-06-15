@@ -7,7 +7,10 @@ import { useDecartStory } from './hooks/useDecartStory'
 import { useAmbientAudio } from './hooks/useAmbientAudio'
 import { activeStories } from './data/story'
 
-const TRANSITION_MS = 1200 // duration of the blur/dim mask around a setPrompt call
+const MIN_MASK_MS = 300 // floor so a fast transform doesn't flash the mask
+const MAX_MASK_MS = 5000 // safety: clear the mask even if the promise never resolves
+const SETTLE_AFTER_MS = 250 // hold the mask briefly AFTER the transform applies so the
+// new frames settle before the blur lifts
 const AMBIENT_LEAD_SEC = 1 // ambient bed crossfades slightly ahead of the beat,
 // independent of the visual leadInSec (which can be 0 to land the cut on the line)
 
@@ -25,6 +28,7 @@ function App() {
   const [transitioning, setTransitioning] = useState(false)
   const timeoutsRef = useRef([])
   const transitionTimeoutRef = useRef(null)
+  const maskGenRef = useRef(0) // invalidates stale transitions (restart / overlap)
   const audioRef = useRef(null)
   const { connect, disconnect, setPrompt, status, error } = useDecartStory()
   const ambient = useAmbientAudio()
@@ -36,19 +40,40 @@ function App() {
       clearTimeout(transitionTimeoutRef.current)
       transitionTimeoutRef.current = null
     }
+    maskGenRef.current++ // any in-flight transition resolve is now stale
     setTransitioning(false)
   }, [])
 
-  // Wraps setPrompt in a transition mask so the visual "tear" is hidden.
+  // Wraps setPrompt in a transition mask that tracks the ACTUAL transform: the
+  // mask stays on until setPrompt's promise resolves (Decart resolves it only once
+  // the new look is applied server-side), then clears. A floor avoids a flash on a
+  // fast transform; a ceiling clears the mask if the promise never resolves.
   const triggerBeatPrompt = useCallback(
     (prompt) => {
+      const gen = ++maskGenRef.current
+      const startedAt = performance.now()
       setTransitioning(true)
-      setPrompt(prompt)
-      if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current)
-      transitionTimeoutRef.current = setTimeout(() => {
+
+      const endMask = () => {
+        if (maskGenRef.current !== gen) return // a newer transition took over
+        if (transitionTimeoutRef.current) {
+          clearTimeout(transitionTimeoutRef.current)
+          transitionTimeoutRef.current = null
+        }
         setTransitioning(false)
-        transitionTimeoutRef.current = null
-      }, TRANSITION_MS)
+      }
+
+      if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current)
+      transitionTimeoutRef.current = setTimeout(endMask, MAX_MASK_MS)
+
+      setPrompt(prompt).finally(() => {
+        if (maskGenRef.current !== gen) return // stale (restart or newer beat)
+        // Hold for a settle tail after resolve, but keep the overall min floor.
+        const elapsed = performance.now() - startedAt
+        const delay = Math.max(SETTLE_AFTER_MS, MIN_MASK_MS - elapsed)
+        if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current)
+        transitionTimeoutRef.current = setTimeout(endMask, delay)
+      })
     },
     [setPrompt]
   )

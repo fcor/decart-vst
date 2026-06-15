@@ -38,44 +38,44 @@ a small per-beat lead if needed.
 
 | Model | What it does |
 | --- | --- |
-| `lucy-restyle-2` | Realtime style transfer — what we use. Prompts only, no input image. |
+| `lucy-restyle-2` | Realtime **style** transfer — what we use. Text prompt and/or a non-face style reference image. |
+| `lucy-2.1` | Realtime character/identity transfer — expects a **face** reference. Not for environment/style refs. |
+| `lucy-2.5` | *(coming soon)* Decart recommends it for non-face style/atmosphere — expected to be a better fit for this app than `restyle-2`. |
 | `lucy-vton-latest` | Virtual try-on — accepts a garment image. Used by sibling `decart-1.0` project. |
 
 `models.realtime(id)` returns a `{ width, height, fps }` shape we use to ask `getUserMedia` for the right video constraints.
 
 ## Prompt switching
 
-- `client.setPrompt(string)` — fast, single-arg, no image. This is what the storytelling app uses.
-- `client.set({ prompt, image, enhance })` — accepts a reference image (try-on flow). Not used here.
+- `client.setPrompt(string)` — text-only restyle. Defaults to `enhance: true` (keep it on — it enriches the prompt). This is what the app uses.
+- `client.set({ prompt, image, enhance })` — **atomic** combined update (text + style reference together). Use this to change both at once, not separate `setImage`/`setPrompt` (which double-reload). Not sticky — re-send the image each call (see Reference images).
+- `client.setImage(image)` — style reference only (its second arg is ignored; see Reference images).
+- **All of `set` / `setPrompt` / `setImage` return a promise that resolves only once the transform is applied server-side.** We drive the blur mask off this (see `App.jsx` `triggerBeatPrompt`) so it tracks the real transform duration; also usable to prevent duplicate in-flight calls or show a before/after indicator.
 - Prompt swaps are **not instant** — the visual interpolates over a second or two. Plan beats accordingly (≥5s apart).
 
-## Reference images (style references) — the one that bit us
+## Reference images (style references) — corrected by the Decart team (2026-06-11)
 
-For our model (`lucy-restyle-2` = Lucy Restyle Live), the reference image is a
-**style** anchor, not a character/identity. Three SDK facts that matter:
+For `lucy-restyle-2` (Lucy Restyle Live) the reference image is a **style** anchor — not
+a face/identity (that's Lucy 2.1). Authoritative guidance from the Decart team:
 
-1. **Send image + prompt in one call: `setImage(blob, { prompt })`.** Verified in the
-   SDK source (`webrtc-connection.js → setImageBase64`): the `{ prompt }` option is
-   attached to a single `set_image` WebSocket message, so both apply as one atomic
-   server-side update (one reload). The docs' "Using style references" example shows
-   two separate calls (`setImage` then `setPrompt`) — but empirically that sends two
-   messages and double-flickers, the prompt rewriting the just-applied image. The
-   bundled single call is the right move; our on-the-wire trace beats the doc example.
+1. **Combine image + prompt with `set({ image, prompt, enhance })`** — one atomic update.
+   `setImage(blob, { prompt })` is **not** a valid signature; the second argument is
+   ignored. (That's exactly why our test showed the image applied but the prompt ignored.)
+   Calling `setImage()` then `setPrompt()` separately is a **double-reload by design**.
+2. **`set()` is not sticky.** It does not persist the image across later calls — you must
+   re-send the image on every `set()`. The efficient pattern is to **upload the file once
+   with `client.files.upload()` and reuse the returned `file_…` id** (sent as a reference
+   on the wire instead of re-encoding the bytes each time).
+3. **Keep `enhance: true`** — it enriches the text prompt to complement the style reference.
+4. **No reference-vs-prompt weighting** is exposed today; the balance isn't client-configurable.
 
-2. **Don't use `set()`.** `set()` replaces the whole state — `set({ prompt })` wipes a
-   previously set image. That breaks "visual chapters", where a prompt-only beat must
-   *keep* the prior sticky image. A bare `setPrompt()` touches only the prompt, so the
-   image persists. (Decart docs also flag `set()` as unreliable for Restyle Live style refs.)
+> ⚠️ Supersedes earlier notes in this file that claimed `setImage(blob, { prompt })` sends
+> the prompt atomically and that the image is sticky — **both wrong**. The SDK serializes
+> the prompt onto the `set_image` message, but the server ignores it.
 
-3. **The `setImage` second arg is real, not ignored.** It exists in the SDK's TS types
-   and the compiled source builds `message.prompt` / `message.enhance_prompt` onto the
-   `set_image` payload. Public API docs only show `setImage(image)`, but the installed
-   SDK fully supports the options form.
-
-Accepted image inputs: `Blob`, `File`, or URL string. We fetch our `public/references/`
-files into Blobs and cache them at connect time so beat-time swaps have no fetch latency.
-For images reused across reconnects, `client.files.upload()` returns a `file_…` id you can
-pass instead of re-encoding bytes — not needed for our short single-session story.
+For this use case the Decart team **recommends waiting for Lucy 2.5** (releasing soon),
+which will handle non-face style/atmosphere transfer significantly better. Our reference-
+image feature stays parked until then.
 
 ## Camera constraints
 
