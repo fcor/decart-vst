@@ -21,7 +21,7 @@
 
 ## Parked / blocked
 
-- **Reference image plumbing** — built and reverted; prompt-only output was more interesting. The Decart team has since clarified the correct approach (see `decart-notes.md` / `decisions.md`): combine via `set({ image, prompt, enhance })` (not `setImage`, whose prompt arg is ignored), `set()` is not sticky so reuse a `client.files.upload()` `file_…` id, and there's no reference-weighting knob. **Recommendation: revisit with Lucy 2.5** (releasing soon), which Decart says handles non-face style/atmosphere significantly better than `restyle-2`. Code preserved in git history; test images still in `public/references/`.
+- **Reference image plumbing** — built, tested twice, reverted both times; prompt-only stays the default. Latest attempt used the correct `set({ image, prompt, enhance })` recipe on beats 1–4, but the **image dominated the prompt** and there's no weighting knob to rebalance (and the refs were repurposed/mismatched). Mechanism is sound; it's a creative/weighting limitation of `restyle-2`. The hook plumbing (`setImagePrompt`/`preloadImages`/scheduler branch) is left dormant. **Revisit with greenhouse-matched refs and/or Lucy 2.5** (Decart says it handles this use case much better). Code + recipe ready; test images in `public/references/`.
 
 ## Next (in rough order)
 

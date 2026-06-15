@@ -61,7 +61,7 @@ export const stories = [
         t: 38,
         audio: '/audio/greenhouse/5.mp3',
         effect: '/audio/greenhouse/effects/5.wav',
-        prompt: 'Sun-lit clear sky conservatory, bright midday sun, crisp crystal-clear palette, joyful impressionist oil style',
+        prompt: 'Lush overgrown greenhouse bathed in golden morning light, hanging blossoms and tall ferns, warm honey-and-emerald palette, Studio Ghibli watercolor',
         narration: 'The storm has passed, and you are exactly where you are meant to grow.',
       },
     ],

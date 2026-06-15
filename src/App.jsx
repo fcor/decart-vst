@@ -30,7 +30,7 @@ function App() {
   const transitionTimeoutRef = useRef(null)
   const maskGenRef = useRef(0) // invalidates stale transitions (restart / overlap)
   const audioRef = useRef(null)
-  const { connect, disconnect, setPrompt, status, error } = useDecartStory()
+  const { connect, disconnect, setPrompt, setImagePrompt, preloadImages, status, error } = useDecartStory()
   const ambient = useAmbientAudio()
 
   const clearTimeouts = useCallback(() => {
@@ -44,12 +44,13 @@ function App() {
     setTransitioning(false)
   }, [])
 
-  // Wraps setPrompt in a transition mask that tracks the ACTUAL transform: the
-  // mask stays on until setPrompt's promise resolves (Decart resolves it only once
-  // the new look is applied server-side), then clears. A floor avoids a flash on a
-  // fast transform; a ceiling clears the mask if the promise never resolves.
+  // Wraps a beat's restyle in a transition mask that tracks the ACTUAL transform:
+  // the mask stays on until the apply promise resolves (Decart resolves it only once
+  // the new look is applied server-side), then clears after a short settle. A beat
+  // with a referenceImage applies image+prompt atomically via set(); otherwise it's
+  // a plain setPrompt. A floor avoids a flash; a ceiling clears if it never resolves.
   const triggerBeatPrompt = useCallback(
-    (prompt) => {
+    (beat) => {
       const gen = ++maskGenRef.current
       const startedAt = performance.now()
       setTransitioning(true)
@@ -66,7 +67,11 @@ function App() {
       if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current)
       transitionTimeoutRef.current = setTimeout(endMask, MAX_MASK_MS)
 
-      setPrompt(prompt).finally(() => {
+      const apply = beat.referenceImage
+        ? setImagePrompt(beat.referenceImage, beat.prompt)
+        : setPrompt(beat.prompt)
+
+      apply.finally(() => {
         if (maskGenRef.current !== gen) return // stale (restart or newer beat)
         // Hold for a settle tail after resolve, but keep the overall min floor.
         const elapsed = performance.now() - startedAt
@@ -75,7 +80,7 @@ function App() {
         transitionTimeoutRef.current = setTimeout(endMask, delay)
       })
     },
-    [setPrompt]
+    [setPrompt, setImagePrompt]
   )
 
   // Play a beat's prebaked narration clip. No-ops cleanly if the beat has no
@@ -117,6 +122,10 @@ function App() {
   const handleStageReady = useCallback(() => {
     clearTimeouts()
 
+    // Warm the reference-image cache so beat-time set() has no fetch latency.
+    const refUrls = selectedStory.beats.map((b) => b.referenceImage).filter(Boolean)
+    if (refUrls.length) preloadImages(refUrls)
+
     const leadIn = selectedStory.leadInSec ?? 0
 
     selectedStory.beats.forEach((beat, idx) => {
@@ -132,7 +141,7 @@ function App() {
       // Beat 0's look is already applied via initialState at connect, so don't
       // re-send it here (avoids a redundant re-interpolation at the very start).
       if (idx > 0) {
-        const promptId = setTimeout(() => triggerBeatPrompt(beat.prompt), promptDelayMs)
+        const promptId = setTimeout(() => triggerBeatPrompt(beat), promptDelayMs)
         timeoutsRef.current.push(promptId)
       }
       const ambientId = setTimeout(() => ambient.crossfadeTo(idx, beat.effectGain ?? 1), ambientDelayMs)
@@ -149,7 +158,7 @@ function App() {
     const endId = setTimeout(() => setPhase('done'), selectedStory.durationSec * 1000)
     const fadeId = setTimeout(() => ambient.fadeOut(), selectedStory.durationSec * 1000)
     timeoutsRef.current.push(endId, fadeId)
-  }, [triggerBeatPrompt, clearTimeouts, selectedStory, playBeatAudio, ambient])
+  }, [triggerBeatPrompt, clearTimeouts, selectedStory, playBeatAudio, ambient, preloadImages])
 
   useEffect(() => () => clearTimeouts(), [clearTimeouts])
   useEffect(() => () => ambient.stop(), [ambient])

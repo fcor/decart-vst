@@ -4,6 +4,18 @@ Append-only log. Newest at top. Each entry: date, decision, why, what was reject
 
 ---
 
+## 2026-06-11 — Tried `set({ image, prompt })` combine; reverted — image dominates, no tuning
+
+**Decision:** Wired the Decart-recommended atomic combine (`set({ image, prompt, enhance: true })`, blob re-sent each call) onto greenhouse beats 1–4 through the promise-driven mask, then reverted to prompt-only. Removed the four `referenceImage` fields; left the hook plumbing (`setImagePrompt`, `preloadImages`, the scheduler branch) dormant.
+
+**Why:** Live result was strange and clearly **image-dominated** — the reference overpowered the text prompt, and there's no client-side weighting to rebalance it (confirmed by Decart). Two confounds: the refs were repurposed from the old dawn/forest/cavern/ocean placeholder (not greenhouse), and the image weight isn't tunable. Either way prompt-only is the better look today.
+
+**Mechanism worked** (atomic combine, mask, pacing all fine) — this was a creative/weighting verdict, not a technical failure.
+
+**Revisit when:** (a) we have greenhouse-matched reference images to retest fairly, and/or (b) Lucy 2.5 ships (Decart says it handles this use case much better). The recipe + dormant code are ready.
+
+---
+
 ## 2026-06-11 — Promise-driven transition mask (replaces fixed `TRANSITION_MS`)
 
 **Decision:** The blur/dim mask now stays on until `setPrompt`'s promise resolves — which Decart resolves only once the new look is applied server-side — instead of a fixed 1200ms timer. A `MIN_MASK_MS` (300ms) floor prevents a flash on a fast transform, a `MAX_MASK_MS` (5s) ceiling clears the mask if the promise never resolves, and a generation counter (`maskGenRef`) invalidates stale resolves on restart/overlap.

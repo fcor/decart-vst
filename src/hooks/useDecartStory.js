@@ -9,8 +9,28 @@ async function fetchClientToken() {
 
 export function useDecartStory() {
   const rtClientRef = useRef(null)
+  const imageCacheRef = useRef(new Map()) // url -> Blob, so set()'s re-send has no refetch
   const [status, setStatus] = useState('idle') // idle | connecting | connected | error
   const [error, setError] = useState(null)
+
+  // Fetch a reference image into a Blob (cached). set() isn't sticky, so we re-send
+  // the bytes each call — caching avoids re-fetching from the network each time.
+  const loadImageBlob = useCallback(async (url) => {
+    const cache = imageCacheRef.current
+    if (cache.has(url)) return cache.get(url)
+    const res = await fetch(url)
+    if (!res.ok) throw new Error(`Failed to load reference image: ${url}`)
+    const blob = await res.blob()
+    cache.set(url, blob)
+    return blob
+  }, [])
+
+  const preloadImages = useCallback(
+    (urls) => Promise.all(urls.map((u) => loadImageBlob(u).catch((err) => {
+      console.warn('[decart] preload failed', u, err)
+    }))),
+    [loadImageBlob]
+  )
 
   const connect = useCallback(async (localStream, outputVideoEl, modelId, initialPrompt) => {
     setStatus('connecting')
@@ -61,6 +81,28 @@ export function useDecartStory() {
     }
   }, [])
 
+  // Atomic image + prompt update via set() — the Decart-recommended way to combine a
+  // style reference with a text prompt. set() is NOT sticky, so every call re-sends
+  // the image. Resolves only once the transform is applied (drives the mask).
+  const setImagePrompt = useCallback(
+    async (url, prompt) => {
+      const client = rtClientRef.current
+      if (!client) {
+        console.warn('[decart] set called before client ready')
+        return
+      }
+      try {
+        const blob = await loadImageBlob(url)
+        await client.set({ image: blob, prompt, enhance: true })
+        console.log('[decart] set ok', { url, prompt })
+      } catch (err) {
+        console.error('[decart] set failed', err)
+        setError(err.message || 'set failed')
+      }
+    },
+    [loadImageBlob]
+  )
+
   const disconnect = useCallback(() => {
     if (rtClientRef.current) {
       rtClientRef.current.disconnect()
@@ -69,5 +111,5 @@ export function useDecartStory() {
     setStatus('idle')
   }, [])
 
-  return { connect, disconnect, setPrompt, status, error }
+  return { connect, disconnect, setPrompt, setImagePrompt, preloadImages, status, error }
 }
